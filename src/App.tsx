@@ -6,7 +6,7 @@ import { signOut } from 'firebase/auth'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { useAuth } from './context/AuthContext'
 import React, { useEffect, useState } from 'react'
-import { UserProfile } from './types'
+import type { UserProfile } from './types'
 
 function App() {
   const { user } = useAuth();

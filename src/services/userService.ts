@@ -5,11 +5,10 @@ import {
   updateDoc, 
   increment, 
   collection, 
-  addDoc, 
-  serverTimestamp 
+  addDoc
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { UserProfile } from '../types';
+import type { UserProfile } from '../types';
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
   const docRef = doc(db, 'users', uid);
