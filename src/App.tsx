@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { Rocket, Shield, Zap, Code2, LogOut } from 'lucide-react'
 import { cn } from './lib/utils'
 import { auth } from './lib/firebase'
