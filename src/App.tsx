@@ -1,8 +1,15 @@
-import { motion } from 'framer-motion'
-import { Rocket, Shield, Zap, Code2 } from 'lucide-react'
+import { Rocket, Shield, Zap, Code2, LogOut } from 'lucide-react'
 import { cn } from './lib/utils'
+import { auth } from './lib/firebase'
+import { signOut } from 'firebase/auth'
+import { useAuth } from './context/AuthContext'
 
 function App() {
+  const { user } = useAuth();
+
+  const handleLogout = () => {
+    signOut(auth);
+  };
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-slate-200 flex flex-col items-center justify-center p-6 font-sans selection:bg-blue-500/30">
       {/* Background Glow */}
@@ -21,7 +28,7 @@ function App() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-4">
             <Zap size={14} className="fill-current" />
-            <span>React Dönüşümü Başladı</span>
+            <span>Hoş geldin, {user?.email?.split('@')[0]}</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
@@ -67,15 +74,23 @@ function App() {
           />
         </motion.div>
 
-        {/* CTA */}
+        {/* CTA & Logout */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="pt-8"
+          className="pt-8 flex flex-col items-center gap-4"
         >
           <button className="px-8 py-4 bg-white text-black font-semibold rounded-xl hover:bg-slate-200 transition-colors shadow-lg shadow-white/5 active:scale-95">
             Geliştirmeye Başla
+          </button>
+          
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-slate-500 hover:text-red-400 transition-colors text-sm"
+          >
+            <LogOut size={16} />
+            Sistemden Güvenli Çıkış Yap
           </button>
         </motion.div>
       </main>
