@@ -2,15 +2,16 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAnalytics } from 'firebase/analytics';
 
-// ÖNEMLİ: Bu değerleri Firebase Console üzerinden alıp güncellemelisin.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "strivion.firebaseapp.com",
-  projectId: "strivion",
-  storageBucket: "strivion.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBv8yVqg9SjQyyjpvhIJzDRCz5vbv7zL1M",
+  authDomain: "strivion-d08ec.firebaseapp.com",
+  projectId: "strivion-d08ec",
+  storageBucket: "strivion-d08ec.firebasestorage.app",
+  messagingSenderId: "393720637032",
+  appId: "1:393720637032:web:9e5e21bb94caddc7313ddd",
+  measurementId: "G-ZZHR6WJMN9"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -18,5 +19,6 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 export default app;
