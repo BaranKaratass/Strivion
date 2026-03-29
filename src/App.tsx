@@ -1,12 +1,29 @@
 import { motion } from 'framer-motion'
 import { Rocket, Shield, Zap, Code2, LogOut } from 'lucide-react'
 import { cn } from './lib/utils'
-import { auth } from './lib/firebase'
+import { auth, db } from './lib/firebase'
 import { signOut } from 'firebase/auth'
+import { doc, onSnapshot } from 'firebase/firestore'
 import { useAuth } from './context/AuthContext'
+import React, { useEffect, useState } from 'react'
+import { UserProfile } from './types'
 
 function App() {
   const { user } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Real-time profil takibi
+    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+      if (doc.exists()) {
+        setProfile(doc.data() as UserProfile);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleLogout = () => {
     signOut(auth);
@@ -27,8 +44,12 @@ function App() {
           transition={{ duration: 0.8 }}
           className="space-y-6"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-4">
-            <Zap size={14} className="fill-current" />
+          <div className="inline-flex items-center gap-4 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-4">
+            <div className="flex items-center gap-2">
+              <Zap size={14} className="fill-current text-amber-400" />
+              <span>{profile?.coins || 0} Coin</span>
+            </div>
+            <div className="w-px h-3 bg-white/10" />
             <span>Hoş geldin, {user?.email?.split('@')[0]}</span>
           </div>
           
