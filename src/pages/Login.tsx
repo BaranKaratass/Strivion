@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { createUserProfile } from '../services/userService';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { motion } from 'framer-motion';
@@ -19,7 +20,12 @@ export const Login = () => {
     setError('');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Firestore profilini oluştur
+      await createUserProfile(user.uid, email, email.split('@')[0]);
+      
       navigate('/');
     } catch (err: any) {
       setError('E-posta veya şifre hatalı. Lütfen tekrar deneyin.');
