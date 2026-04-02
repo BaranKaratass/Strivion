@@ -7,8 +7,11 @@ import {
   collection, 
   addDoc
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import type { UserProfile } from '../types';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../lib/firebase';
+import type { UserProfile, PrivacySettings } from '../types';
+
+// ─── Profil İşlemleri ─────────────────────────────────────
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
   const docRef = doc(db, 'users', uid);
@@ -25,8 +28,23 @@ export const createUserProfile = async (uid: string, email: string, displayName:
     uid,
     email,
     displayName,
-    coins: 100, // Yeni kullanıcılara başlangıç hediyesi
+    bio: '',
+    avatarUrl: '',
+    coins: 100,
     level: 1,
+    favoriteGames: [],
+    privacy: {
+      showTournaments: true,
+      showStats: true,
+      showOnlineStatus: true,
+    },
+    stats: {
+      totalMatches: 0,
+      wins: 0,
+      losses: 0,
+      tournamentsJoined: 0,
+      tournamentsWon: 0,
+    },
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -34,6 +52,45 @@ export const createUserProfile = async (uid: string, email: string, displayName:
   await setDoc(doc(db, 'users', uid), profile);
   return profile;
 };
+
+// ─── Profil Güncelleme ────────────────────────────────────
+
+export const updateUserProfile = async (
+  uid: string, 
+  data: Partial<Pick<UserProfile, 'displayName' | 'bio' | 'favoriteGames' | 'avatarUrl'>>
+) => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    ...data,
+    updatedAt: Date.now(),
+  });
+};
+
+// ─── Gizlilik Ayarları ───────────────────────────────────
+
+export const updatePrivacySettings = async (uid: string, privacy: PrivacySettings) => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    privacy,
+    updatedAt: Date.now(),
+  });
+};
+
+// ─── Profil Fotoğrafı Yükleme ────────────────────────────
+
+export const uploadAvatar = async (uid: string, file: File): Promise<string> => {
+  const storageRef = ref(storage, `avatars/${uid}/${Date.now()}_${file.name}`);
+  
+  await uploadBytes(storageRef, file);
+  const downloadURL = await getDownloadURL(storageRef);
+  
+  // Firestore'daki profili güncelle
+  await updateUserProfile(uid, { avatarUrl: downloadURL });
+  
+  return downloadURL;
+};
+
+// ─── Coin İşlemleri ──────────────────────────────────────
 
 export const updateCoins = async (uid: string, amount: number, reason: string) => {
   const userRef = doc(db, 'users', uid);

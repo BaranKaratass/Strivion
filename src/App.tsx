@@ -1,27 +1,26 @@
 import { motion } from 'framer-motion'
-import { Rocket, Shield, Zap, Code2, LogOut } from 'lucide-react'
+import { Rocket, Shield, Zap, Code2, LogOut, User, ChevronRight, Trophy, Plus } from 'lucide-react'
 import { cn } from './lib/utils'
 import { auth, db } from './lib/firebase'
 import { signOut } from 'firebase/auth'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { useAuth } from './context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import type { UserProfile } from './types'
 
 function App() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
-
-    // Real-time profil takibi
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
       if (doc.exists()) {
         setProfile(doc.data() as UserProfile);
       }
     });
-
     return () => unsubscribe();
   }, [user]);
 
@@ -34,6 +33,26 @@ function App() {
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-600/10 blur-[120px] rounded-full" />
+      </div>
+
+      {/* Top-right Profile Button */}
+      <div className="fixed top-5 right-5 z-20">
+        <button
+          onClick={() => navigate('/profile')}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+        >
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/30 to-purple-500/30 flex items-center justify-center overflow-hidden">
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+            ) : (
+              <User size={14} className="text-blue-400" />
+            )}
+          </div>
+          <span className="text-sm text-slate-400 group-hover:text-white transition-colors">
+            {profile?.displayName || user?.email?.split('@')[0]}
+          </span>
+          <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+        </button>
       </div>
 
       <main className="relative z-10 max-w-4xl w-full text-center space-y-12">
@@ -83,17 +102,53 @@ function App() {
             done
           />
           <StatusCard 
-            icon={<Shield className="text-amber-400" />}
-            title="Firebase Entegrasyonu"
-            desc="Bağımlılıklar hazır, yapılandırma aşamasında."
-            pending
-          />
-          <StatusCard 
-            icon={<Zap className="text-purple-400" />}
-            title="UI Sistemi"
-            desc="Karanlık tema ve premium efektler eklendi."
+            icon={<Shield className="text-blue-400" />}
+            title="Firebase & Auth"
+            desc="Giriş, kayıt, profil, coin sistemi tam çalışıyor."
             done
           />
+          <StatusCard 
+            icon={<Trophy className="text-amber-400" />}
+            title="Turnuva Sistemi"
+            desc="Oluşturma, yönetim, detay sayfaları tamamlandı."
+            done
+          />
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+          className="grid grid-cols-2 gap-3 text-left"
+        >
+          <button
+            onClick={() => navigate('/tournaments')}
+            className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15 hover:bg-amber-500/10 transition-all group"
+          >
+            <div className="p-2 rounded-xl bg-amber-500/10">
+              <Trophy size={18} className="text-amber-400" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-white">Turnuvalarım</p>
+              <p className="text-xs text-slate-500">Yönet ve katıl</p>
+            </div>
+            <ChevronRight size={14} className="ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" />
+          </button>
+
+          <button
+            onClick={() => navigate('/tournaments/create')}
+            className="flex items-center gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/15 hover:bg-blue-500/10 transition-all group"
+          >
+            <div className="p-2 rounded-xl bg-blue-500/10">
+              <Plus size={18} className="text-blue-400" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-white">Yeni Turnuva</p>
+              <p className="text-xs text-slate-500">Hemen oluştur</p>
+            </div>
+            <ChevronRight size={14} className="ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" />
+          </button>
         </motion.div>
 
         {/* CTA & Logout */}
@@ -101,12 +156,8 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="pt-8 flex flex-col items-center gap-4"
+          className="pt-4 flex flex-col items-center gap-4"
         >
-          <button className="px-8 py-4 bg-white text-black font-semibold rounded-xl hover:bg-slate-200 transition-colors shadow-lg shadow-white/5 active:scale-95">
-            Geliştirmeye Başla
-          </button>
-          
           <button 
             onClick={handleLogout}
             className="flex items-center gap-2 text-slate-500 hover:text-red-400 transition-colors text-sm"

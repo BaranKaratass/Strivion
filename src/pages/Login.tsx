@@ -5,7 +5,7 @@ import { auth } from '../lib/firebase';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { motion } from 'framer-motion';
-import { LogIn } from 'lucide-react';
+import { LogIn, KeyRound } from 'lucide-react';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -63,6 +63,16 @@ export const Login = () => {
               required
               error={error}
             />
+          </div>
+
+          <div className="flex items-center justify-end">
+            <Link
+              to="/forgot-password"
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-purple-400 transition-colors"
+            >
+              <KeyRound size={12} />
+              Şifremi unuttum
+            </Link>
           </div>
 
           <Button type="submit" loading={loading}>
