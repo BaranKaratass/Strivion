@@ -1,29 +1,46 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Trophy, ChevronRight, Search } from 'lucide-react';
+import { Plus, Trophy, ChevronRight, Search, Globe, Ticket, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getUserTournaments } from '../services/tournamentService';
+import { getUserTournaments, getJoinedTournaments } from '../services/tournamentService';
 import { TournamentCard } from '../components/TournamentCard';
+import { cn } from '../lib/utils';
 import type { Tournament } from '../types';
+
+type Tab = 'owned' | 'joined';
+type StatusFilter = 'all' | 'waiting' | 'active' | 'completed';
 
 export const Tournaments = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'waiting' | 'active' | 'completed'>('all');
+  const [tab, setTab] = useState<Tab>('owned');
+  const [ownedTournaments, setOwnedTournaments] = useState<Tournament[]>([]);
+  const [joinedTournaments, setJoinedTournaments] = useState<Tournament[]>([]);
+  const [loadingOwned, setLoadingOwned] = useState(true);
+  const [loadingJoined, setLoadingJoined] = useState(true);
+  const [filter, setFilter] = useState<StatusFilter>('all');
 
   useEffect(() => {
     if (!user) return;
     getUserTournaments(user.uid)
-      .then(setTournaments)
-      .finally(() => setLoading(false));
+      .then(setOwnedTournaments)
+      .finally(() => setLoadingOwned(false));
+
+    getJoinedTournaments(user.uid)
+      .then(data => {
+        // Katıldıklarımdan, kendi oluşturduklarımı çıkar (zaten owned'da var)
+        setJoinedTournaments(data.filter(t => t.ownerId !== user.uid));
+      })
+      .finally(() => setLoadingJoined(false));
   }, [user]);
 
+  const currentTournaments = tab === 'owned' ? ownedTournaments : joinedTournaments;
+  const loading = tab === 'owned' ? loadingOwned : loadingJoined;
+
   const filtered = filter === 'all'
-    ? tournaments
-    : tournaments.filter(t => t.status === filter);
+    ? currentTournaments
+    : currentTournaments.filter(t => t.status === filter);
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-slate-200 font-sans">
@@ -50,13 +67,29 @@ export const Tournaments = () => {
             </button>
           </div>
 
-          <button
-            onClick={() => navigate('/tournaments/create')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-white text-sm font-semibold transition-colors"
-          >
-            <Plus size={16} />
-            Yeni Turnuva
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/tournaments/browse')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white text-sm transition-all border border-white/8"
+            >
+              <Globe size={14} />
+              Keşfet
+            </button>
+            <button
+              onClick={() => navigate('/tournaments/join')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 rounded-xl text-purple-300 text-sm font-medium transition-all border border-purple-500/20"
+            >
+              <Ticket size={14} />
+              Kod ile Katıl
+            </button>
+            <button
+              onClick={() => navigate('/tournaments/create')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-white text-sm font-semibold transition-colors"
+            >
+              <Plus size={16} />
+              Yeni
+            </button>
+          </div>
         </motion.div>
 
         {/* Title */}
@@ -71,9 +104,41 @@ export const Tournaments = () => {
             </div>
             Turnuvalarım
           </h1>
-          <p className="text-slate-500 text-sm mt-1 ml-12">
-            Oluşturduğun tüm turnuvalar
-          </p>
+        </motion.div>
+
+        {/* Tab Selector */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.08 }}
+          className="flex gap-1 p-1 bg-white/5 rounded-xl border border-white/8"
+        >
+          <button
+            onClick={() => { setTab('owned'); setFilter('all'); }}
+            className={cn(
+              'flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2',
+              tab === 'owned' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'
+            )}
+          >
+            <Trophy size={14} />
+            Oluşturduklarım
+            {ownedTournaments.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-md bg-white/10 text-xs">{ownedTournaments.length}</span>
+            )}
+          </button>
+          <button
+            onClick={() => { setTab('joined'); setFilter('all'); }}
+            className={cn(
+              'flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2',
+              tab === 'joined' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'
+            )}
+          >
+            <Users size={14} />
+            Katıldıklarım
+            {joinedTournaments.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-md bg-white/10 text-xs">{joinedTournaments.length}</span>
+            )}
+          </button>
         </motion.div>
 
         {/* Filter Tabs */}
@@ -87,11 +152,10 @@ export const Tournaments = () => {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                filter === f
+              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === f
                   ? 'bg-white/10 text-white'
                   : 'text-slate-500 hover:text-slate-300'
-              }`}
+                }`}
             >
               {{ all: 'Tümü', waiting: 'Kayıt Açık', active: 'Aktif', completed: 'Bitti' }[f]}
             </button>
@@ -115,13 +179,17 @@ export const Tournaments = () => {
             </div>
             <div className="space-y-1">
               <p className="text-white font-medium">
-                {filter === 'all' ? 'Henüz turnuva oluşturmadın' : 'Bu kategoride turnuva yok'}
+                {tab === 'owned'
+                  ? (filter === 'all' ? 'Henüz turnuva oluşturmadın' : 'Bu kategoride turnuva yok')
+                  : (filter === 'all' ? 'Henüz bir turnuvaya katılmadın' : 'Bu kategoride turnuva yok')
+                }
               </p>
               <p className="text-slate-500 text-sm">
-                {filter === 'all' && 'İlk turnuvanı oluşturmak için butona tıkla.'}
+                {tab === 'owned' && filter === 'all' && 'İlk turnuvanı oluşturmak için butona tıkla.'}
+                {tab === 'joined' && filter === 'all' && 'Açık turnuvaları keşfet veya kod ile katıl.'}
               </p>
             </div>
-            {filter === 'all' && (
+            {tab === 'owned' && filter === 'all' && (
               <button
                 onClick={() => navigate('/tournaments/create')}
                 className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-white text-sm font-semibold transition-colors mt-2"
@@ -129,6 +197,24 @@ export const Tournaments = () => {
                 <Plus size={16} />
                 Turnuva Oluştur
               </button>
+            )}
+            {tab === 'joined' && filter === 'all' && (
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => navigate('/tournaments/browse')}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600/20 border border-emerald-500/20 rounded-xl text-emerald-300 text-sm font-semibold transition-colors"
+                >
+                  <Globe size={16} />
+                  Keşfet
+                </button>
+                <button
+                  onClick={() => navigate('/tournaments/join')}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-purple-600/20 border border-purple-500/20 rounded-xl text-purple-300 text-sm font-semibold transition-colors"
+                >
+                  <Ticket size={16} />
+                  Kod ile Katıl
+                </button>
+              </div>
             )}
           </motion.div>
         ) : (
@@ -138,7 +224,7 @@ export const Tournaments = () => {
                 key={tournament.id}
                 tournament={tournament}
                 index={index}
-                showManage
+                showManage={tab === 'owned'}
               />
             ))}
           </div>

@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ChevronRight, Copy, CheckCheck, Users, Zap, Trophy,
   Lock, Unlock, Clock, Play, CheckCircle, Settings, User,
-  Crown, Shield
+  Crown, Shield, Loader2, Ticket
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTournament } from '../hooks/useTournament';
+import { joinTournament, addTestBot } from '../services/tournamentService';
+import { getTournamentMatches } from '../services/bracketService';
+import { TournamentBracket } from '../components/TournamentBracket';
 import { cn } from '../lib/utils';
+import type { Match, TournamentParticipant } from '../types';
 
 const STATUS_CONFIG = {
   waiting: { label: 'Kayıt Açık', icon: <Clock size={14} />, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
@@ -211,10 +215,20 @@ export const TournamentDetail = () => {
           transition={{ delay: 0.2 }}
           className="bg-white/[0.03] rounded-2xl border border-white/10 p-5 space-y-3"
         >
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Users size={15} className="text-blue-400" />
-            Katılımcılar ({participants.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Users size={15} className="text-blue-400" />
+              Katılımcılar ({participants.length})
+            </h2>
+            {isOwner && tournament.status === 'waiting' && !isFull && (
+              <button
+                onClick={() => addTestBot(tournament.id)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
+              >
+                + Bot Ekle (Test)
+              </button>
+            )}
+          </div>
 
           {participants.length === 0 ? (
             <p className="text-sm text-slate-500 py-2">Henüz katılımcı yok.</p>
@@ -240,21 +254,45 @@ export const TournamentDetail = () => {
           )}
         </motion.div>
 
-        {/* Katıl CTA (Hafta 5) */}
-        {!isOwner && tournament.status === 'waiting' && !isFull && (
+        {/* Bracket Viewer */}
+        {tournament.status !== 'waiting' && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
+            className="bg-white/[0.03] rounded-2xl border border-white/10 p-5 space-y-3 overflow-hidden"
+          >
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Trophy size={15} className="text-purple-400" />
+              Eşleşme Ağacı
+            </h2>
+            <TournamentBracketSection tournamentId={tournament.id} participants={participants} />
+          </motion.div>
+        )}
+
+        {/* Katıl CTA */}
+        {!isOwner && tournament.status === 'waiting' && !isFull && !tournament.participantIds.includes(user?.uid || '') && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
             className="bg-emerald-500/5 rounded-2xl border border-emerald-500/10 p-5 text-center space-y-2"
           >
             <p className="text-sm text-slate-400">Bu turnuvaya katılmak ister misin?</p>
-            <button
-              disabled
-              className="w-full py-3 rounded-xl bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 text-sm font-semibold opacity-50 cursor-not-allowed"
-            >
-              Katıl — Hafta 5'te aktif olacak
-            </button>
+            <JoinButton tournamentId={tournament.id} />
+          </motion.div>
+        )}
+
+        {/* Already joined badge */}
+        {!isOwner && tournament.participantIds.includes(user?.uid || '') && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/15 text-emerald-400 text-sm font-medium"
+          >
+            <CheckCircle size={16} />
+            Bu turnuvaya zaten katıldın
           </motion.div>
         )}
 
@@ -262,7 +300,7 @@ export const TournamentDetail = () => {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.35 }}
           className="text-center text-xs text-slate-600 pb-6"
         >
           Oluşturan: {tournament.ownerName} •{' '}
@@ -272,6 +310,60 @@ export const TournamentDetail = () => {
     </div>
   );
 };
+
+function JoinButton({ tournamentId }: { tournamentId: string }) {
+  const { user } = useAuth();
+  const [joining, setJoining] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleJoin = async () => {
+    if (!user) return;
+    setJoining(true);
+    setError('');
+    try {
+      const result = await joinTournament(tournamentId, user);
+      if (result.success) {
+        setSuccess(true);
+      } else {
+        setError(result.error || 'Katılım başarısız.');
+      }
+    } catch {
+      setError('Bir hata oluştu.');
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600/20 border border-emerald-500/25 text-emerald-400 font-semibold text-sm">
+        <CheckCircle size={18} />
+        Katıldın!
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={handleJoin}
+        disabled={joining}
+        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        {joining ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : (
+          <>
+            <Ticket size={18} />
+            Turnuvaya Katıl
+          </>
+        )}
+      </button>
+      {error && <p className="text-xs text-red-400 text-center">{error}</p>}
+    </div>
+  );
+}
 
 function MetaBadge({ icon, label, color = 'default' }: { icon: React.ReactNode; label: string; color?: string }) {
   return (
@@ -284,5 +376,37 @@ function MetaBadge({ icon, label, color = 'default' }: { icon: React.ReactNode; 
       {icon}
       {label}
     </span>
+  );
+}
+
+function TournamentBracketSection({ tournamentId, participants }: { tournamentId: string, participants: TournamentParticipant[] }) {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // We need participants as a dictionary for easy lookup
+  const participantsDict = participants.reduce((acc, p) => {
+    acc[p.uid] = p;
+    return acc;
+  }, {} as Record<string, TournamentParticipant>);
+
+  useEffect(() => {
+    getTournamentMatches(tournamentId).then(data => {
+      setMatches(data);
+      setLoading(false);
+    });
+  }, [tournamentId]);
+
+  if (loading) {
+    return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-blue-400" /></div>;
+  }
+
+  if (matches.length === 0) {
+    return <p className="text-slate-500 text-sm text-center py-4">Ağaç henüz oluşturulmamış.</p>;
+  }
+
+  return (
+    <div className="bg-[#0a0a0c]/50 rounded-xl border border-white/5">
+      <TournamentBracket matches={matches} participants={participantsDict} />
+    </div>
   );
 }

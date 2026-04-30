@@ -16,7 +16,7 @@ const GAMES = [
 ];
 
 const RANKS = ['', 'Iron', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Grandmaster', 'Challenger'];
-const MAX_SIZES = [4, 8, 16, 32];
+const MAX_SIZES = [4, 8, 16, 32, 64];
 
 const INITIAL: CreateTournamentData = {
   title: '',
@@ -176,7 +176,7 @@ export const TournamentCreate = () => {
             {/* Max Participants */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-400 ml-1">Maksimum Katılımcı</label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 {MAX_SIZES.map(size => (
                   <button
                     key={size}

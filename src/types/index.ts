@@ -68,6 +68,20 @@ export interface TournamentParticipant {
   status: 'active' | 'eliminated' | 'winner';
 }
 
+export type MatchStatus = 'pending' | 'active' | 'completed';
+
+export interface Match {
+  id: string;
+  tournamentId: string;
+  round: number; // e.g., 1 for quarterfinals, 2 for semifinals (or reversed depending on logic)
+  matchIndex: number; // Position in the round
+  player1Id: string | null; // null if TBD (To Be Determined)
+  player2Id: string | null;
+  winnerId: string | null;
+  nextMatchId: string | null; // ID of the match the winner goes to
+  status: MatchStatus;
+}
+
 export interface CreateTournamentData {
   title: string;
   description: string;

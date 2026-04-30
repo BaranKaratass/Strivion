@@ -9,6 +9,8 @@ import { Tournaments } from './pages/Tournaments';
 import { TournamentCreate } from './pages/TournamentCreate';
 import { TournamentDetail } from './pages/TournamentDetail';
 import { TournamentManage } from './pages/TournamentManage';
+import { TournamentJoin } from './pages/TournamentJoin';
+import { TournamentBrowse } from './pages/TournamentBrowse';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -28,6 +30,8 @@ const AppRouter = () => {
           <Route path="/profile/edit" element={<ProtectedRoute><ProfileEdit /></ProtectedRoute>} />
           <Route path="/tournaments" element={<ProtectedRoute><Tournaments /></ProtectedRoute>} />
           <Route path="/tournaments/create" element={<ProtectedRoute><TournamentCreate /></ProtectedRoute>} />
+          <Route path="/tournaments/join" element={<ProtectedRoute><TournamentJoin /></ProtectedRoute>} />
+          <Route path="/tournaments/browse" element={<ProtectedRoute><TournamentBrowse /></ProtectedRoute>} />
           <Route path="/tournaments/:id" element={<ProtectedRoute><TournamentDetail /></ProtectedRoute>} />
           <Route path="/tournaments/:id/manage" element={<ProtectedRoute><TournamentManage /></ProtectedRoute>} />
         </Routes>

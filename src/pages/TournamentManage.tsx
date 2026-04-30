@@ -12,7 +12,9 @@ import {
   updateTournamentInfo,
   deleteTournament,
   removeParticipant,
+  addTestBot,
 } from '../services/tournamentService';
+import { generateBracket } from '../services/bracketService';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { cn } from '../lib/utils';
@@ -76,6 +78,14 @@ export const TournamentManage = () => {
     if (!id) return;
     setStatusLoading(true);
     try {
+      if (newStatus === 'active') {
+        const res = await generateBracket(id, tournament.participantIds);
+        if (!res.success) {
+          alert(res.error);
+          setStatusLoading(false);
+          return;
+        }
+      }
       await updateTournamentStatus(id, newStatus);
     } finally {
       setStatusLoading(false);
@@ -102,6 +112,9 @@ export const TournamentManage = () => {
       setRemovingUid(null);
     }
   };
+
+  const validParticipantCounts = [4, 8, 16, 32, 64];
+  const isValidCount = validParticipantCounts.includes(participants.length);
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-slate-200 font-sans">
@@ -156,7 +169,7 @@ export const TournamentManage = () => {
             {tournament.status === 'waiting' && (
               <button
                 onClick={() => handleStatusChange('active')}
-                disabled={statusLoading || participants.length < 2}
+                disabled={statusLoading || !isValidCount}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all',
                   'bg-emerald-600/20 border border-emerald-500/25 text-emerald-300',
@@ -185,9 +198,9 @@ export const TournamentManage = () => {
             )}
           </div>
 
-          {tournament.status === 'waiting' && participants.length < 2 && (
+          {tournament.status === 'waiting' && !isValidCount && (
             <p className="text-xs text-amber-400/70">
-              Turnuvayı başlatmak için en az 2 katılımcı gerekli.
+              Turnuvayı başlatmak için tam 4, 8, 16, 32 veya 64 katılımcı gerekli. Şu an: {participants.length}
             </p>
           )}
         </motion.div>
@@ -236,9 +249,19 @@ export const TournamentManage = () => {
           transition={{ delay: 0.2 }}
           className="bg-white/[0.03] rounded-2xl border border-white/10 p-5 space-y-3"
         >
-          <h2 className="text-sm font-semibold text-white">
-            Katılımcılar ({participants.length}/{tournament.maxParticipants})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">
+              Katılımcılar ({participants.length}/{tournament.maxParticipants})
+            </h2>
+            {tournament.status === 'waiting' && (
+              <button
+                onClick={() => addTestBot(tournament.id)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
+              >
+                + Bot Ekle (Test)
+              </button>
+            )}
+          </div>
 
           {participants.length === 0 ? (
             <p className="text-sm text-slate-500">Henüz katılımcı yok.</p>

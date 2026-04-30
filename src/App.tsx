@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Rocket, Shield, Zap, Code2, LogOut, User, ChevronRight, Trophy, Plus } from 'lucide-react'
+import { Rocket, Shield, Zap, Code2, LogOut, User, ChevronRight, Trophy, Plus, Globe, Ticket } from 'lucide-react'
 import { cn } from './lib/utils'
 import { auth, db } from './lib/firebase'
 import { signOut } from 'firebase/auth'
@@ -55,151 +55,116 @@ function App() {
         </button>
       </div>
 
-      <main className="relative z-10 max-w-4xl w-full text-center space-y-12">
+      <main className="relative z-10 max-w-3xl w-full text-center space-y-12">
         {/* Hero Section */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           className="space-y-6"
         >
-          <div className="inline-flex items-center gap-4 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-4">
-            <div className="flex items-center gap-2">
-              <Zap size={14} className="fill-current text-amber-400" />
-              <span>{profile?.coins || 0} Coin</span>
-            </div>
-            <div className="w-px h-3 bg-white/10" />
-            <span>Hoş geldin, {user?.email?.split('@')[0]}</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-amber-400 text-sm font-medium mb-4">
+            <Zap size={16} className="fill-current" />
+            <span>{profile?.coins || 0} Coin Bakiye</span>
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
-            Strivion <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 whitespace-nowrap">Yeni Nesil</span>
+            Strivion <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Arena</span>
           </h1>
-          
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Flutter'dan React'e evrilen, hızı ve şıklığıyla büyüleyen yeni deneyiminiz için temeller atıldı. 
-            Haftalık plana göre ilerliyoruz.
+
+          <p className="text-lg md:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed">
+            Rekabetçi turnuvalara katıl, yeteneklerini kanıtla ve ödüller kazan. 
+            Strivion dünyasına hoş geldin!
           </p>
         </motion.div>
 
-        {/* Status Grid */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 1 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left"
-        >
-          <StatusCard 
-            icon={<Rocket className="text-blue-400" />}
-            title="Proje Başlatıldı"
-            desc="Vite + React (TypeScript) iskeleti kuruldu."
-            done
-          />
-          <StatusCard 
-            icon={<Code2 className="text-emerald-400" />}
-            title="Modern Stack"
-            desc="Tailwind v4, Framer Motion ve Lucide entegre edildi."
-            done
-          />
-          <StatusCard 
-            icon={<Shield className="text-blue-400" />}
-            title="Firebase & Auth"
-            desc="Giriş, kayıt, profil, coin sistemi tam çalışıyor."
-            done
-          />
-          <StatusCard 
-            icon={<Trophy className="text-amber-400" />}
-            title="Turnuva Sistemi"
-            desc="Oluşturma, yönetim, detay sayfaları tamamlandı."
-            done
-          />
-        </motion.div>
-
-        {/* Quick Actions */}
+        {/* Core Actions */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="grid grid-cols-2 gap-3 text-left"
+          transition={{ delay: 0.4, duration: 0.8 }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto"
         >
           <button
-            onClick={() => navigate('/tournaments')}
-            className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15 hover:bg-amber-500/10 transition-all group"
+            onClick={() => navigate('/tournaments/create')}
+            className="flex items-center gap-4 p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all group"
           >
-            <div className="p-2 rounded-xl bg-amber-500/10">
-              <Trophy size={18} className="text-amber-400" />
+            <div className="p-3 rounded-xl bg-blue-500/20">
+              <Plus size={22} className="text-blue-400" />
             </div>
-            <div className="text-left">
-              <p className="text-sm font-semibold text-white">Turnuvalarım</p>
-              <p className="text-xs text-slate-500">Yönet ve katıl</p>
+            <div className="text-left flex-1">
+              <p className="text-base font-bold text-white">Turnuva Oluştur</p>
+              <p className="text-sm text-slate-400">Kendi turnuvanı düzenle</p>
             </div>
-            <ChevronRight size={14} className="ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" />
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
           </button>
 
           <button
-            onClick={() => navigate('/tournaments/create')}
-            className="flex items-center gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/15 hover:bg-blue-500/10 transition-all group"
+            onClick={() => navigate('/tournaments/join')}
+            className="flex items-center gap-4 p-5 rounded-2xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-all group"
           >
-            <div className="p-2 rounded-xl bg-blue-500/10">
-              <Plus size={18} className="text-blue-400" />
+            <div className="p-3 rounded-xl bg-purple-500/20">
+              <Ticket size={22} className="text-purple-400" />
             </div>
-            <div className="text-left">
-              <p className="text-sm font-semibold text-white">Yeni Turnuva</p>
-              <p className="text-xs text-slate-500">Hemen oluştur</p>
+            <div className="text-left flex-1">
+              <p className="text-base font-bold text-white">Kod ile Katıl</p>
+              <p className="text-sm text-slate-400">Özel turnuvaya gir</p>
             </div>
-            <ChevronRight size={14} className="ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" />
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-purple-400 transition-colors" />
+          </button>
+
+          <button
+            onClick={() => navigate('/tournaments/browse')}
+            className="flex items-center gap-4 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all group"
+          >
+            <div className="p-3 rounded-xl bg-emerald-500/20">
+              <Globe size={22} className="text-emerald-400" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-base font-bold text-white">Turnuva Keşfet</p>
+              <p className="text-sm text-slate-400">Açık turnuvaları listele</p>
+            </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
+          </button>
+
+          <button
+            onClick={() => navigate('/tournaments')}
+            className="flex items-center gap-4 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all group"
+          >
+            <div className="p-3 rounded-xl bg-amber-500/20">
+              <Trophy size={22} className="text-amber-400" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-base font-bold text-white">Turnuvalarım</p>
+              <p className="text-sm text-slate-400">Yönet ve takip et</p>
+            </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-amber-400 transition-colors" />
           </button>
         </motion.div>
 
         {/* CTA & Logout */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="pt-4 flex flex-col items-center gap-4"
+          transition={{ delay: 0.6 }}
+          className="pt-8 flex flex-col items-center gap-4"
         >
-          <button 
+          <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-slate-500 hover:text-red-400 transition-colors text-sm"
+            className="flex items-center gap-2 text-slate-500 hover:text-red-400 transition-colors text-sm font-medium"
           >
             <LogOut size={16} />
-            Sistemden Güvenli Çıkış Yap
+            Güvenli Çıkış Yap
           </button>
         </motion.div>
       </main>
 
       {/* Footer */}
-      <footer className="absolute bottom-8 text-slate-500 text-sm">
-        Strivion &copy; 2026 • React Dönüşüm Yolculuğu
+      <footer className="absolute bottom-8 text-slate-600 text-xs tracking-wider">
+        STRIVION &copy; 2026
       </footer>
     </div>
-  )
+  );
 }
 
-function StatusCard({ icon, title, desc, done, pending }: { icon: React.ReactNode, title: string, desc: string, done?: boolean, pending?: boolean }) {
-  return (
-    <div className={cn(
-      "p-5 rounded-2xl border transition-all duration-300",
-      done ? "bg-white/5 border-white/10 hover:border-white/20" : "bg-black/20 border-white/5 opacity-50",
-      pending && "bg-amber-500/5 border-amber-500/10"
-    )}>
-      <div className="flex items-start gap-4">
-        <div className="p-2 rounded-lg bg-black/40 border border-white/10">
-          {icon}
-        </div>
-        <div className="space-y-1">
-          <h3 className="font-semibold text-white flex items-center gap-2">
-            {title}
-            {done && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}
-            {pending && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
-          </h3>
-          <p className="text-sm text-slate-400 leading-snug">
-            {desc}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default App
+export default App;

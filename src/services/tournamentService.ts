@@ -10,7 +10,9 @@ import {
   where,
   orderBy,
   limit,
+  increment,
   serverTimestamp,
+  arrayUnion,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Tournament, TournamentParticipant, CreateTournamentData, TournamentStatus } from '../types';
@@ -150,6 +152,128 @@ export const removeParticipant = async (
       participantIds: current.filter(id => id !== uid),
     });
   }
+};
+
+// ─── Turnuva Arama (Kod ile) ─────────────────────────────
+
+export const findTournamentByCode = async (code: string): Promise<Tournament | null> => {
+  const q = query(
+    collection(db, 'tournaments'),
+    where('code', '==', code.toUpperCase().trim()),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  return snap.docs[0].data() as Tournament;
+};
+
+// ─── Turnuvaya Katılma ────────────────────────────────────
+
+export const joinTournament = async (
+  tournamentId: string,
+  user: User
+): Promise<{ success: boolean; error?: string }> => {
+  const ref = doc(db, 'tournaments', tournamentId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    return { success: false, error: 'Turnuva bulunamadı.' };
+  }
+
+  const tournament = snap.data() as Tournament;
+
+  // Doğrulamalar
+  if (tournament.status !== 'waiting') {
+    return { success: false, error: 'Bu turnuva artık kayıt almıyor.' };
+  }
+  if (tournament.participantIds.length >= tournament.maxParticipants) {
+    return { success: false, error: 'Turnuva dolu.' };
+  }
+  if (tournament.participantIds.includes(user.uid)) {
+    return { success: false, error: 'Zaten bu turnuvaya katılmışsın.' };
+  }
+  if (tournament.ownerId === user.uid) {
+    return { success: false, error: 'Kendi turnuvana tekrar katılamazsın.' };
+  }
+
+  // Katılımcı olarak ekle
+  const participant: TournamentParticipant = {
+    uid: user.uid,
+    displayName: user.displayName || user.email?.split('@')[0] || 'Anonim',
+    avatarUrl: user.photoURL || '',
+    joinedAt: Date.now(),
+    status: 'active',
+  };
+
+  await setDoc(doc(db, 'tournaments', tournamentId, 'participants', user.uid), participant);
+
+  // participantIds array'ini güncelle
+  await updateDoc(ref, {
+    participantIds: [...tournament.participantIds, user.uid],
+  });
+
+  // Kullanıcı istatistiklerini güncelle
+  const userRef = doc(db, 'users', user.uid);
+  await updateDoc(userRef, {
+    'stats.tournamentsJoined': increment(1),
+  });
+
+  return { success: true };
+};
+
+// ─── Açık Turnuvaları Getir ───────────────────────────────
+
+export const getPublicTournaments = async (): Promise<Tournament[]> => {
+  const q = query(
+    collection(db, 'tournaments'),
+    where('isPrivate', '==', false),
+    where('status', '==', 'waiting'),
+    orderBy('createdAt', 'desc'),
+    limit(30)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as Tournament);
+};
+
+// ─── Katılınan Turnuvaları Getir ──────────────────────────
+
+export const getJoinedTournaments = async (uid: string): Promise<Tournament[]> => {
+  const q = query(
+    collection(db, 'tournaments'),
+    where('participantIds', 'array-contains', uid),
+    orderBy('createdAt', 'desc'),
+    limit(30)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as Tournament);
+};
+
+// ─── Test İçin Bot Ekleme (Sadece Geliştirme Aşaması İçin) ───
+
+export const addTestBot = async (tournamentId: string): Promise<void> => {
+  const ref = doc(db, 'tournaments', tournamentId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const tournament = snap.data() as Tournament;
+  if (tournament.participantIds.length >= tournament.maxParticipants) return;
+
+  const botUid = `bot_${Math.random().toString(36).substring(2, 9)}`;
+  const botName = `Test Bot ${Math.floor(Math.random() * 1000)}`;
+
+  const participant: TournamentParticipant = {
+    uid: botUid,
+    displayName: botName,
+    avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${botUid}`,
+    joinedAt: Date.now(),
+    status: 'active',
+  };
+
+  await setDoc(doc(db, 'tournaments', tournamentId, 'participants', botUid), participant);
+  
+  await updateDoc(ref, {
+    participantIds: arrayUnion(botUid),
+  });
 };
 
 // Suppress unused import warning — serverTimestamp kept for future use

@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Trophy, Users, Lock, Unlock, Zap, ChevronRight, Clock, Play, CheckCircle } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import type { Tournament } from '../../types';
+import { cn } from '../lib/utils';
+import type { Tournament } from '../types';
 
 const GAME_EMOJIS: Record<string, string> = {
   'Valorant': '🎯',
