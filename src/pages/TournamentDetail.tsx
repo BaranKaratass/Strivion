@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, Copy, CheckCheck, Users, Zap, Trophy,
   Lock, Unlock, Clock, Play, CheckCircle, Settings, User,
-  Crown, Shield, Loader2, Ticket, UserX, MessageSquare
+  Crown, Shield, Loader2, Ticket, UserX, MessageSquare, MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTournament } from '../hooks/useTournament';
