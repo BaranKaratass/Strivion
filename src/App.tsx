@@ -199,9 +199,8 @@ function App() {
         </motion.div>
       </main>
 
-      {/* Footer */}
-      <footer className="absolute bottom-8 text-slate-600 text-xs tracking-wider">
-        STRIVION &copy; 2026
+      <footer className="mt-20 mb-8 text-slate-600 text-[10px] uppercase tracking-[0.2em] font-medium opacity-50">
+        STRIVION &copy; 2026 • Premium Arena Platform
       </footer>
     </div>
   );
