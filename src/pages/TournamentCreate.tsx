@@ -26,6 +26,7 @@ const INITIAL: CreateTournamentData = {
   minRank: '',
   maxRank: '',
   isPrivate: false,
+  isOwnerParticipating: true,
   prizePool: 0,
 };
 
@@ -285,6 +286,34 @@ export const TournamentCreate = () => {
               >
                 <motion.div
                   animate={{ x: form.isPrivate ? 20 : 2 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                />
+              </button>
+            </div>
+
+            {/* Participation Toggle */}
+            <div className="flex items-center justify-between py-1 border-t border-white/5 pt-4">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <Users size={14} className="text-blue-400" /> Turnuvaya Katıl
+                </p>
+                <p className="text-xs text-slate-500">
+                  {form.isOwnerParticipating
+                    ? 'Oyuncu olarak listeye dahil edileceksin.'
+                    : 'Sadece yönetici olacaksın, kontenjan harcamaz.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => set('isOwnerParticipating', !form.isOwnerParticipating)}
+                className={cn(
+                  'relative w-11 h-6 rounded-full transition-colors duration-300',
+                  form.isOwnerParticipating ? 'bg-blue-600' : 'bg-white/10'
+                )}
+              >
+                <motion.div
+                  animate={{ x: form.isOwnerParticipating ? 20 : 2 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
                 />

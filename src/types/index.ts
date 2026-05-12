@@ -53,6 +53,7 @@ export interface Tournament {
   maxRank: string;
   status: TournamentStatus;
   isPrivate: boolean;
+  isOwnerParticipating: boolean;
   prizePool: number;
   participantIds: string[];
   createdAt: number;
@@ -90,6 +91,7 @@ export interface CreateTournamentData {
   minRank: string;
   maxRank: string;
   isPrivate: boolean;
+  isOwnerParticipating: boolean;
   prizePool: number;
 }
 

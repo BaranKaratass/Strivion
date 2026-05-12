@@ -16,12 +16,18 @@ export const TournamentBrowse = () => {
     const navigate = useNavigate();
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [gameFilter, setGameFilter] = useState('Tümü');
 
     useEffect(() => {
+        setError(null);
         getPublicTournaments()
             .then(setTournaments)
+            .catch((err) => {
+                setError("Turnuvalar yüklenirken bir sorun oluştu. İndeks oluşturulmamış olabilir.");
+                console.error(err);
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -126,6 +132,16 @@ export const TournamentBrowse = () => {
                 {loading ? (
                     <div className="flex justify-center py-20">
                         <Loader2 size={28} className="text-emerald-400 animate-spin" />
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-16 bg-white/[0.03] border border-white/10 rounded-2xl p-6">
+                        <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+                            <Globe size={20} className="text-red-400" />
+                        </div>
+                        <p className="text-red-400 text-sm font-medium">{error}</p>
+                        <p className="text-slate-500 text-xs mt-2 max-w-xs mx-auto">
+                            Eksik Firestore indeksi hatası alıyor olabilirsin. Tarayıcı konsolunu (F12) açıp gelen linke tıklayarak indeksi oluşturabilirsin.
+                        </p>
                     </div>
                 ) : filtered.length === 0 ? (
                     <motion.div

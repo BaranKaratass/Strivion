@@ -1,4 +1,4 @@
-import { collection, doc, writeBatch, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, getDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Match, MatchStatus } from '../types';
 
@@ -107,5 +107,66 @@ export const getTournamentMatches = async (tournamentId: string): Promise<Match[
     } catch (error) {
         console.error('Error fetching matches:', error);
         return [];
+    }
+};
+
+export const updateMatchWinner = async (
+    tournamentId: string, 
+    matchId: string, 
+    winnerId: string
+): Promise<{ success: boolean; error?: string }> => {
+    try {
+        const batch = writeBatch(db);
+        const matchRef = doc(db, `tournaments/${tournamentId}/matches`, matchId);
+        const matchSnap = await getDoc(matchRef);
+
+        if (!matchSnap.exists()) {
+            return { success: false, error: 'Maç bulunamadı.' };
+        }
+
+        const matchData = matchSnap.data() as Match;
+
+        // 1. Mevcut maçı güncelle
+        batch.update(matchRef, {
+            winnerId,
+            status: 'completed'
+        });
+
+        // 2. Eğer bir sonraki maç varsa (Final değilse)
+        if (matchData.nextMatchId) {
+            const nextMatchRef = doc(db, `tournaments/${tournamentId}/matches`, matchData.nextMatchId);
+            const nextMatchSnap = await getDoc(nextMatchRef);
+
+            if (nextMatchSnap.exists()) {
+                const nextMatchData = nextMatchSnap.data() as Match;
+                const isEven = matchData.matchIndex % 2 === 0;
+                
+                const updates: Partial<Match> = isEven 
+                    ? { player1Id: winnerId } 
+                    : { player2Id: winnerId };
+
+                // Eğer diğer oyuncu da hazırsa maçı aktifleştir
+                const otherPlayerId = isEven ? nextMatchData.player2Id : nextMatchData.player1Id;
+                if (otherPlayerId) {
+                    updates.status = 'active';
+                }
+
+                batch.update(nextMatchRef, updates);
+            }
+        } else {
+            // Final maçı ise katılımcı statüsünü güncelle
+            const participantRef = doc(db, `tournaments/${tournamentId}/participants`, winnerId);
+            batch.update(participantRef, { status: 'winner' });
+            
+            // Turnuvayı tamamla
+            const tournamentRef = doc(db, 'tournaments', tournamentId);
+            batch.update(tournamentRef, { status: 'completed', completedAt: Date.now() });
+        }
+
+        await batch.commit();
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error updating match winner:', error);
+        return { success: false, error: error.message };
     }
 };

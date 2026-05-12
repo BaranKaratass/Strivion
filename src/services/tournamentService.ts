@@ -13,6 +13,7 @@ import {
   increment,
   serverTimestamp,
   arrayUnion,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Tournament, TournamentParticipant, CreateTournamentData, TournamentStatus } from '../types';
@@ -64,8 +65,9 @@ export const createTournament = async (
     maxRank: data.maxRank,
     status: 'waiting',
     isPrivate: data.isPrivate,
+    isOwnerParticipating: data.isOwnerParticipating,
     prizePool: data.prizePool,
-    participantIds: [user.uid],
+    participantIds: data.isOwnerParticipating ? [user.uid] : [],
     createdAt: Date.now(),
     startedAt: null,
     completedAt: null,
@@ -73,15 +75,17 @@ export const createTournament = async (
 
   await setDoc(doc(db, 'tournaments', id), tournament);
 
-  // Sahibi otomatik katılımcı olarak ekle
-  const participant: TournamentParticipant = {
-    uid: user.uid,
-    displayName: user.displayName || user.email?.split('@')[0] || 'Anonim',
-    avatarUrl: '',
-    joinedAt: Date.now(),
-    status: 'active',
-  };
-  await setDoc(doc(db, 'tournaments', id, 'participants', user.uid), participant);
+  // Sahibi katılımcı olarak seçilmişse ekle
+  if (data.isOwnerParticipating) {
+    const participant: TournamentParticipant = {
+      uid: user.uid,
+      displayName: user.displayName || user.email?.split('@')[0] || 'Anonim',
+      avatarUrl: user.photoURL || '',
+      joinedAt: Date.now(),
+      status: 'active',
+    };
+    await setDoc(doc(db, 'tournaments', id, 'participants', user.uid), participant);
+  }
 
   return id;
 };
@@ -192,9 +196,6 @@ export const joinTournament = async (
   if (tournament.participantIds.includes(user.uid)) {
     return { success: false, error: 'Zaten bu turnuvaya katılmışsın.' };
   }
-  if (tournament.ownerId === user.uid) {
-    return { success: false, error: 'Kendi turnuvana tekrar katılamazsın.' };
-  }
 
   // Katılımcı olarak ekle
   const participant: TournamentParticipant = {
@@ -224,15 +225,20 @@ export const joinTournament = async (
 // ─── Açık Turnuvaları Getir ───────────────────────────────
 
 export const getPublicTournaments = async (): Promise<Tournament[]> => {
-  const q = query(
-    collection(db, 'tournaments'),
-    where('isPrivate', '==', false),
-    where('status', '==', 'waiting'),
-    orderBy('createdAt', 'desc'),
-    limit(30)
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => d.data() as Tournament);
+  try {
+    const q = query(
+      collection(db, 'tournaments'),
+      where('isPrivate', '==', false),
+      where('status', '==', 'waiting'),
+      orderBy('createdAt', 'desc'),
+      limit(30)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as Tournament);
+  } catch (error) {
+    console.error("Keşfet sorgusu hatası:", error);
+    throw error;
+  }
 };
 
 // ─── Katılınan Turnuvaları Getir ──────────────────────────
@@ -269,11 +275,18 @@ export const addTestBot = async (tournamentId: string): Promise<void> => {
     status: 'active',
   };
 
-  await setDoc(doc(db, 'tournaments', tournamentId, 'participants', botUid), participant);
+  const batch = writeBatch(db);
   
-  await updateDoc(ref, {
+  // 1. Katılımcı dökümanını ekle
+  const botRef = doc(db, 'tournaments', tournamentId, 'participants', botUid);
+  batch.set(botRef, participant);
+  
+  // 2. Turnuva listesini güncelle
+  batch.update(ref, {
     participantIds: arrayUnion(botUid),
   });
+
+  await batch.commit();
 };
 
 // Suppress unused import warning — serverTimestamp kept for future use

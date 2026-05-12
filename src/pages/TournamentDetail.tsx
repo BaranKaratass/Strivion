@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import {
   ChevronRight, Copy, CheckCheck, Users, Zap, Trophy,
   Lock, Unlock, Clock, Play, CheckCircle, Settings, User,
-  Crown, Shield, Loader2, Ticket
+  Crown, Shield, Loader2, Ticket, UserX
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTournament } from '../hooks/useTournament';
-import { joinTournament, addTestBot } from '../services/tournamentService';
+import { joinTournament, addTestBot, removeParticipant } from '../services/tournamentService';
 import { getTournamentMatches } from '../services/bracketService';
 import { TournamentBracket } from '../components/TournamentBracket';
 import { cn } from '../lib/utils';
@@ -31,7 +31,7 @@ export const TournamentDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { tournament, participants, loading, error } = useTournament(id);
+  const { tournament, participants, matches, loading, error } = useTournament(id);
   const [copied, setCopied] = useState(false);
 
   const copyCode = () => {
@@ -39,6 +39,15 @@ export const TournamentDetail = () => {
     navigator.clipboard.writeText(tournament.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRemoveParticipant = async (uid: string) => {
+    if (!id || !isOwner) return;
+    try {
+      await removeParticipant(id, uid);
+    } catch (err) {
+      console.error("Kick failed:", err);
+    }
   };
 
   if (loading) {
@@ -243,10 +252,18 @@ export const TournamentDetail = () => {
                     }
                   </div>
                   <span className="text-sm text-slate-300 flex-1">{p.displayName}</span>
-                  {p.uid === tournament.ownerId && (
+                  {p.uid === tournament.ownerId ? (
                     <span className="flex items-center gap-1 text-xs text-amber-400">
                       <Crown size={11} /> Sahip
                     </span>
+                  ) : isOwner && (
+                    <button
+                      onClick={() => handleRemoveParticipant(p.uid)}
+                      className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all group"
+                      title="Turnuvadan At"
+                    >
+                      <UserX size={14} className="group-hover:scale-110 transition-transform" />
+                    </button>
                   )}
                 </div>
               ))}
@@ -266,25 +283,27 @@ export const TournamentDetail = () => {
               <Trophy size={15} className="text-purple-400" />
               Eşleşme Ağacı
             </h2>
-            <TournamentBracketSection tournamentId={tournament.id} participants={participants} />
+            <TournamentBracketSection matches={matches} participants={participants} />
           </motion.div>
         )}
 
         {/* Katıl CTA */}
-        {!isOwner && tournament.status === 'waiting' && !isFull && !tournament.participantIds.includes(user?.uid || '') && (
+        {tournament.status === 'waiting' && !isFull && !tournament.participantIds.includes(user?.uid || '') && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="bg-emerald-500/5 rounded-2xl border border-emerald-500/10 p-5 text-center space-y-2"
           >
-            <p className="text-sm text-slate-400">Bu turnuvaya katılmak ister misin?</p>
+            <p className="text-sm text-slate-400">
+              {isOwner ? 'Bu turnuvada oyuncu değilsin, katılmak ister misin?' : 'Bu turnuvaya katılmak ister misin?'}
+            </p>
             <JoinButton tournamentId={tournament.id} />
           </motion.div>
         )}
 
         {/* Already joined badge */}
-        {!isOwner && tournament.participantIds.includes(user?.uid || '') && (
+        {tournament.participantIds.includes(user?.uid || '') && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -379,26 +398,12 @@ function MetaBadge({ icon, label, color = 'default' }: { icon: React.ReactNode; 
   );
 }
 
-function TournamentBracketSection({ tournamentId, participants }: { tournamentId: string, participants: TournamentParticipant[] }) {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
-
+function TournamentBracketSection({ matches, participants }: { matches: Match[], participants: TournamentParticipant[] }) {
   // We need participants as a dictionary for easy lookup
   const participantsDict = participants.reduce((acc, p) => {
     acc[p.uid] = p;
     return acc;
   }, {} as Record<string, TournamentParticipant>);
-
-  useEffect(() => {
-    getTournamentMatches(tournamentId).then(data => {
-      setMatches(data);
-      setLoading(false);
-    });
-  }, [tournamentId]);
-
-  if (loading) {
-    return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-blue-400" /></div>;
-  }
 
   if (matches.length === 0) {
     return <p className="text-slate-500 text-sm text-center py-4">Ağaç henüz oluşturulmamış.</p>;
