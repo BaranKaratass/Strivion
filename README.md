@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# 🚀 Strivion Arena
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Strivion, oyuncular için geliştirilmiş premium, futuristik ve gerçek zamanlı bir turnuva yönetim platformudur. Oyuncuların rekabet edebileceği, topluluklarla etkileşime geçebileceği ve kendi turnuvalarını profesyonelce yönetebileceği bir ekosistem sunar.
 
-Currently, two official plugins are available:
+![Strivion UI](https://img.shields.io/badge/UI-Futuristic-blue) ![Stack](https://img.shields.io/badge/Stack-React_|_TypeScript_|_Firebase-emerald)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Temel Özellikler
 
-## React Compiler
+### 🏆 Gelişmiş Turnuva Sistemi
+- **Dinamik Eşleşme Ağacı (Bracket):** Gerçek zamanlı güncellenen, double-sided (çift taraflı) görsel eşleşme yapısı.
+- **Admin Kontrol Paneli:** Maç sonuçlarını manuel girme, katılımcıları yönetme ve turnuvayı iptal etme yetkisi.
+- **Esnek Katılım:** Adminin isterse sadece yönetici, isterse oyuncu olarak katılabildiği modüler yapı.
+- **Turnuva Keşfi:** Kod ile özel turnuvalara katılma veya açık turnuvaları keşfetme.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 💬 Sohbet & Sosyal Etkileşim
+- **Turnuva Grup Sohbetleri:** Katılımcılara özel, gerçek zamanlı sohbet odaları.
+- **Resmi Duyurular:** Adminler için parıltılı mesajlar ve sabitlenmiş (pinned) duyuru sistemi.
+- **Özel Mesajlaşma (DM):** Kullanıcılar arası birebir, anlık mesajlaşma ve bildirim sistemi.
+- **Yanıtla (Reply):** Mesajları alıntılayarak profesyonel iletişim.
 
-## Expanding the ESLint configuration
+### 👤 Profil & Ekonomi
+- **Kişiselleştirilebilir Profiller:** Avatar ve istatistik yönetimi.
+- **Strivion Coin:** Turnuva ödülleri ve bakiye sistemi.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Teknoloji Yığını
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Frontend:** React 18, TypeScript, Vite
+- **Styling:** Tailwind CSS, Framer Motion (Animasyonlar)
+- **Backend:** Firebase (Firestore, Auth, Storage)
+- **Icons:** Lucide React
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 📈 Gelişim Yolculuğu
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- [x] **Hafta 1-3:** Temel altyapı ve React migrasyonu.
+- [x] **Hafta 4:** Turnuva oluşturma ve listeleme servisleri.
+- [x] **Hafta 5:** Turnuvaya katılma ve kod sistemi.
+- [x] **Hafta 6:** Eşleşme ağacı (Bracket) tasarımı ve mantığı.
+- [x] **Hafta 7:** Maç yönetimi ve Admin yetkileri (Kick/Cancel).
+- [x] **Hafta 8:** Gerçek zamanlı Sohbet Sistemi ve Özel Mesajlar.
+- [ ] **Hafta 9-11:** (Planlanıyor) Sıralama sistemi, Takım desteği ve Final cilalaması.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🚀 Kurulum
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. Depoyu klonlayın: `git clone https://github.com/BaranKaratass/Strivion.git`
+2. Bağımlılıkları yükleyin: `npm install`
+3. Firebase konfigürasyonunu `.env` dosyasına ekleyin.
+4. Geliştirme sunucusunu başlatın: `npm run dev`
+
+---
+*STRIVION © 2026 - Crafted with ❤️ for Gamers*
