@@ -156,7 +156,7 @@ export const TournamentBracket: React.FC<TournamentBracketProps> = ({ matches, p
                             isChampionDecided ? "text-amber-400" : "text-slate-600"
                         )} />
                         <h3 className="text-xl font-black mt-2 tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
-                            Final
+                            {isChampionDecided ? 'WINNER' : 'Final'}
                         </h3>
                     </motion.div>
 
