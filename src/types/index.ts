@@ -95,3 +95,28 @@ export interface CreateTournamentData {
   prizePool: number;
 }
 
+// ─── Chat Types ──────────────────────────────────────────
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  text: string;
+  timestamp: number;
+  type: 'text' | 'system';
+  isAnnouncement?: boolean;
+  replyToId?: string;
+  replyToName?: string;
+  replyToText?: string;
+}
+
+export interface ChatRoom {
+  id: string;
+  participants: string[]; // List of user UIDs
+  lastMessage?: string;
+  lastMessageAt?: number;
+  lastSeen?: Record<string, number>; // UID -> timestamp
+  updatedAt: number;
+}
+

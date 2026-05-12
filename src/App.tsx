@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion'
-import { Rocket, Shield, Zap, Code2, LogOut, User, ChevronRight, Trophy, Plus, Globe, Ticket } from 'lucide-react'
+import { Rocket, Shield, Zap, Code2, LogOut, User, ChevronRight, Trophy, Plus, Globe, Ticket, MessageCircle } from 'lucide-react'
 import { cn } from './lib/utils'
 import { auth, db } from './lib/firebase'
 import { signOut } from 'firebase/auth'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { doc, onSnapshot, query, collection, where } from 'firebase/firestore'
 import { useAuth } from './context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
@@ -12,16 +12,39 @@ import type { UserProfile } from './types'
 function App() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
-    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+    
+    // User profile listener
+    const unsubProfile = onSnapshot(doc(db, 'users', user.uid), (doc) => {
       if (doc.exists()) {
         setProfile(doc.data() as UserProfile);
       }
     });
-    return () => unsubscribe();
+
+    // Unread messages listener
+    const q = query(
+      collection(db, 'chats'),
+      where('participants', 'array-contains', user.uid)
+    );
+    
+    const unsubChats = onSnapshot(q, (snap) => {
+      const rooms = snap.docs.map(d => d.data() as any);
+      const unread = rooms.some(room => {
+        const lastMessageAt = room.lastMessageAt || 0;
+        const lastSeen = (room.lastSeen && room.lastSeen[user.uid]) || 0;
+        return lastMessageAt > lastSeen;
+      });
+      setHasUnread(unread);
+    });
+
+    return () => {
+      unsubProfile();
+      unsubChats();
+    };
   }, [user]);
 
   const handleLogout = () => {
@@ -139,6 +162,23 @@ function App() {
               <p className="text-sm text-slate-400">Yönet ve takip et</p>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-amber-400 transition-colors" />
+          </button>
+
+          <button
+            onClick={() => navigate('/messages')}
+            className="flex items-center gap-4 p-5 rounded-2xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 transition-all group sm:col-span-2"
+          >
+            <div className="p-3 rounded-xl bg-pink-500/20 relative">
+              <MessageCircle size={22} className="text-pink-400" />
+              {hasUnread && (
+                <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-pink-500 rounded-full border-2 border-[#0a0a0c] animate-pulse" />
+              )}
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-base font-bold text-white">Mesajlar</p>
+              <p className="text-sm text-slate-400">Arkadaşlarınla yazış ve DM gönder</p>
+            </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-pink-400 transition-colors" />
           </button>
         </motion.div>
 

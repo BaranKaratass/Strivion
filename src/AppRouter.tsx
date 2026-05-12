@@ -11,6 +11,7 @@ import { TournamentDetail } from './pages/TournamentDetail';
 import { TournamentManage } from './pages/TournamentManage';
 import { TournamentJoin } from './pages/TournamentJoin';
 import { TournamentBrowse } from './pages/TournamentBrowse';
+import { Messages } from './pages/Messages';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -34,6 +35,7 @@ const AppRouter = () => {
           <Route path="/tournaments/browse" element={<ProtectedRoute><TournamentBrowse /></ProtectedRoute>} />
           <Route path="/tournaments/:id" element={<ProtectedRoute><TournamentDetail /></ProtectedRoute>} />
           <Route path="/tournaments/:id/manage" element={<ProtectedRoute><TournamentManage /></ProtectedRoute>} />
+          <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight, Copy, CheckCheck, Users, Zap, Trophy,
   Lock, Unlock, Clock, Play, CheckCircle, Settings, User,
-  Crown, Shield, Loader2, Ticket, UserX
+  Crown, Shield, Loader2, Ticket, UserX, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTournament } from '../hooks/useTournament';
 import { joinTournament, addTestBot, removeParticipant } from '../services/tournamentService';
 import { getTournamentMatches } from '../services/bracketService';
 import { TournamentBracket } from '../components/TournamentBracket';
+import { TournamentChat } from '../components/TournamentChat';
 import { cn } from '../lib/utils';
 import type { Match, TournamentParticipant } from '../types';
 
@@ -33,6 +34,18 @@ export const TournamentDetail = () => {
   const navigate = useNavigate();
   const { tournament, participants, matches, loading, error } = useTournament(id);
   const [copied, setCopied] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+
+  useEffect(() => {
+    if (showChat) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showChat]);
 
   const copyCode = () => {
     if (!tournament) return;
@@ -106,6 +119,36 @@ export const TournamentDetail = () => {
             >
               <Settings size={14} />
               Yönet
+            </button>
+          )}
+
+          {!isOwner && tournament.participantIds.includes(user?.uid || '') && (
+            <button
+              onClick={() => setShowChat(!showChat)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all text-sm font-medium",
+                showChat 
+                  ? "bg-blue-600 border-blue-500 text-white" 
+                  : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+              )}
+            >
+              <MessageSquare size={14} />
+              Sohbet
+            </button>
+          )}
+          
+          {isOwner && (
+            <button
+              onClick={() => setShowChat(!showChat)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all text-sm font-medium",
+                showChat 
+                  ? "bg-blue-600 border-blue-500 text-white" 
+                  : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+              )}
+            >
+              <MessageSquare size={14} />
+              Sohbet
             </button>
           )}
         </motion.div>
@@ -252,6 +295,17 @@ export const TournamentDetail = () => {
                     }
                   </div>
                   <span className="text-sm text-slate-300 flex-1">{p.displayName}</span>
+                  
+                  {p.uid !== user?.uid && (
+                    <button
+                      onClick={() => navigate('/messages', { state: { startChatWith: p.uid } })}
+                      className="p-1.5 rounded-lg text-slate-600 hover:text-blue-400 hover:bg-blue-500/10 transition-all group"
+                      title="Mesaj Gönder"
+                    >
+                      <MessageCircle size={14} className="group-hover:scale-110 transition-transform" />
+                    </button>
+                  )}
+
                   {p.uid === tournament.ownerId ? (
                     <span className="flex items-center gap-1 text-xs text-amber-400">
                       <Crown size={11} /> Sahip
@@ -326,6 +380,34 @@ export const TournamentDetail = () => {
           {new Date(tournament.createdAt).toLocaleDateString('tr-TR')}
         </motion.p>
       </main>
+
+      {/* Chat Sidebar Overlay */}
+      <AnimatePresence>
+        {showChat && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowChat(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 bottom-0 w-full max-w-sm z-[101]"
+            >
+              <TournamentChat 
+                tournamentId={tournament.id} 
+                ownerId={tournament.ownerId}
+                onClose={() => setShowChat(false)} 
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
